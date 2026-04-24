@@ -16,10 +16,10 @@ import java.util.UUID;
 @Slf4j
 public class FlutterwaveService {
 
-    @Value("${flutterwave.secret-key}")
+    @Value("${flutterwave.secret-key:}")
     private String secretKey;
 
-    @Value("${flutterwave.callback-url}")
+    @Value("${flutterwave.callback-url:https://shop.helvino.org/payment/verify}")
     private String callbackUrl;
 
     private final OkHttpClient httpClient = new OkHttpClient();

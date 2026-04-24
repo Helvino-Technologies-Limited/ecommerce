@@ -20,7 +20,7 @@ spring:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: 587
     username: ${MAIL_USERNAME:info@helvino.org}
-    password: ${MAIL_PASSWORD}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -46,32 +46,32 @@ app:
 
 # M-Pesa Daraja API
 mpesa:
-  consumer-key: ${MPESA_CONSUMER_KEY}
-  consumer-secret: ${MPESA_CONSUMER_SECRET}
-  passkey: ${MPESA_PASSKEY}
-  shortcode: ${MPESA_SHORTCODE}
+  consumer-key: ${MPESA_CONSUMER_KEY:}
+  consumer-secret: ${MPESA_CONSUMER_SECRET:}
+  passkey: ${MPESA_PASSKEY:}
+  shortcode: ${MPESA_SHORTCODE:174379}
   callback-url: ${MPESA_CALLBACK_URL:https://api.helvino.org/api/v1/payments/mpesa/callback}
-  environment: ${MPESA_ENV:sandbox}  # sandbox | production
+  environment: ${MPESA_ENV:sandbox}
 
 # Flutterwave
 flutterwave:
-  public-key: ${FLW_PUBLIC_KEY}
-  secret-key: ${FLW_SECRET_KEY}
-  encryption-key: ${FLW_ENCRYPTION_KEY}
-  webhook-secret: ${FLW_WEBHOOK_SECRET}
+  public-key: ${FLW_PUBLIC_KEY:}
+  secret-key: ${FLW_SECRET_KEY:}
+  encryption-key: ${FLW_ENCRYPTION_KEY:}
+  webhook-secret: ${FLW_WEBHOOK_SECRET:}
   callback-url: ${FLW_CALLBACK_URL:https://shop.helvino.org/payment/verify}
 
 # Africa's Talking (SMS)
 africastalking:
-  api-key: ${AT_API_KEY}
-  username: ${AT_USERNAME}
+  api-key: ${AT_API_KEY:}
+  username: ${AT_USERNAME:sandbox}
   sender-id: ${AT_SENDER_ID:HELVINO}
 
 # Cloudinary (image uploads)
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
 
 # Firebase (push notifications)
 firebase:

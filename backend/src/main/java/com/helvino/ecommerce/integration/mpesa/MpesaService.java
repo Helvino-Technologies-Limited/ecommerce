@@ -19,22 +19,22 @@ import java.util.Map;
 @Slf4j
 public class MpesaService {
 
-    @Value("${mpesa.consumer-key}")
+    @Value("${mpesa.consumer-key:}")
     private String consumerKey;
 
-    @Value("${mpesa.consumer-secret}")
+    @Value("${mpesa.consumer-secret:}")
     private String consumerSecret;
 
-    @Value("${mpesa.passkey}")
+    @Value("${mpesa.passkey:}")
     private String passkey;
 
-    @Value("${mpesa.shortcode}")
+    @Value("${mpesa.shortcode:174379}")
     private String shortcode;
 
-    @Value("${mpesa.callback-url}")
+    @Value("${mpesa.callback-url:https://api.helvino.org/api/v1/payments/mpesa/callback}")
     private String callbackUrl;
 
-    @Value("${mpesa.environment}")
+    @Value("${mpesa.environment:sandbox}")
     private String environment;
 
     private final OkHttpClient httpClient = new OkHttpClient();
