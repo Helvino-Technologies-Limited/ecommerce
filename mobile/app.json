@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Helvino Shop",
+    "slug": "helvino-shop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": { "resizeMode": "contain", "backgroundColor": "#059669" },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "org.helvino.shop" },
+    "android": { "adaptiveIcon": { "backgroundColor": "#059669" }, "package": "org.helvino.shop" },
+    "plugins": ["expo-router", "expo-location", ["expo-notifications", {}]]
+  }
+}

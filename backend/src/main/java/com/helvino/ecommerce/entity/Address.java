@@ -30,6 +30,8 @@ public class Address {
 
     private String county;
 
+    private String town;
+
     private String country = "Kenya";
 
     private String postalCode;

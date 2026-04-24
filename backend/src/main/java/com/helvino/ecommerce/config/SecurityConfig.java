@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/products/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/categories/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/delivery/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/payments/mpesa/callback", "POST")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/payments/flutterwave/webhook", "POST")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
