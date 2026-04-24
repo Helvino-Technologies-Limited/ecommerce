@@ -6,8 +6,14 @@ server:
 spring:
   application:
     name: helvino-ecommerce
-  # DataSource is configured programmatically in DataSourceConfig.java
-  # to normalise the DATABASE_URL regardless of whether it has the jdbc: prefix.
+  datasource:
+    # URL is injected by DatabaseUrlPostProcessor from DATABASE_URL env var
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
   jpa:
     hibernate:
       ddl-auto: update
