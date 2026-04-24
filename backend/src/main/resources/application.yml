@@ -6,14 +6,8 @@ server:
 spring:
   application:
     name: helvino-ecommerce
-  datasource:
-    # URL is injected by DatabaseUrlPostProcessor from DATABASE_URL env var
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+  # DataSource is built programmatically in DataSourceConfig (uses PGSimpleDataSource
+  # to bypass HikariCP's acceptsURL classloader issue in Spring Boot fat JARs)
   jpa:
     hibernate:
       ddl-auto: update
