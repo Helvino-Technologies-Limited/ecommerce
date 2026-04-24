@@ -53,11 +53,10 @@
       <artifactId>spring-boot-starter-cache</artifactId>
     </dependency>
 
-    <!-- PostgreSQL -->
+    <!-- PostgreSQL — compile scope needed for PGSimpleDataSource in DataSourceConfig -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
     </dependency>
 
     <!-- JWT -->
