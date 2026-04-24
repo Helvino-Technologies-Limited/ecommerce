@@ -41,6 +41,7 @@ public class AuthController {
                 .phone(req.getPhone())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role(UserRole.CUSTOMER)
+                .enabled(true)
                 .build();
 
         userRepository.save(user);

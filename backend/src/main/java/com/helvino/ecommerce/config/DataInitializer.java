@@ -22,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         ensureAdminExists();
+        enableAllDisabledUsers();
     }
 
     private void ensureAdminExists() {
@@ -61,6 +62,20 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("Admin user created: {}", email);
             }
         );
+    }
+
+    private void enableAllDisabledUsers() {
+        // Fix accounts created before the @Builder.Default bug was corrected.
+        // All legitimately registered users should be enabled by default.
+        var disabled = userRepository.findAll().stream()
+                .filter(u -> !u.isEnabled())
+                .toList();
+
+        if (!disabled.isEmpty()) {
+            disabled.forEach(u -> u.setEnabled(true));
+            userRepository.saveAll(disabled);
+            log.info("Re-enabled {} user account(s) that were incorrectly disabled", disabled.size());
+        }
     }
 
     private String env(String key, String fallback) {

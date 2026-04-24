@@ -38,23 +38,29 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private UserRole role = UserRole.CUSTOMER;
 
     private String avatarUrl;
 
     @Column(nullable = false)
-    private boolean enabled = true;
+    @Builder.Default
+    private boolean enabled = true;           // @Builder.Default required — Lombok builder ignores plain initializers
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean emailVerified = false;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean phoneVerified = false;
 
     @Column(precision = 12, scale = 2)
+    @Builder.Default
     private BigDecimal walletBalance = BigDecimal.ZERO;
 
     @Column(nullable = false)
+    @Builder.Default
     private int loyaltyPoints = 0;
 
     private String fcmToken;
