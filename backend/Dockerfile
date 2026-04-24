@@ -1,11 +1,17 @@
-FROM eclipse-temurin:21-jdk-alpine as build
+# Build stage — Maven + JDK 21 on Alpine (no wrapper needed)
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN ./mvnw -o package -DskipTests 2>/dev/null || (apt-get update && apt-get install -y maven && mvn package -DskipTests)
 
+# Cache dependencies layer separately
+COPY pom.xml .
+RUN mvn dependency:go-offline -q
+
+COPY src ./src
+RUN mvn package -DskipTests -q
+
+# Runtime stage — JRE only (smaller image)
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
