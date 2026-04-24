@@ -61,8 +61,9 @@ public class AuthController {
                     .body(Map.of("message", "Invalid email or password"));
         }
         if (!user.isEnabled()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Account is disabled"));
+            // Return 401 not 403 — disabled account should not reveal it exists
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Account is disabled. Contact support at info@helvino.org"));
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
