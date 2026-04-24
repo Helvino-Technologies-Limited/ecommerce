@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: helvino-ecommerce-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_Piva61ycWSoA@ep-quiet-shadow-ankrasex-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://shop.helvino.org,http://localhost:3000
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    healthCheckPath: /api/v1/actuator/health
