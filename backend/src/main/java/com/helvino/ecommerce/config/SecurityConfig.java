@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/payments/mpesa/callback", "POST")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/payments/flutterwave/webhook", "POST")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/admin/upload/**", "POST")).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 .requestMatchers(new AntPathRequestMatcher("/admin/**")).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 .requestMatchers(new AntPathRequestMatcher("/riders/**")).hasRole("RIDER")
                 .anyRequest().authenticated()

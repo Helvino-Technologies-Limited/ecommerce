@@ -1,7 +1,9 @@
 package com.helvino.ecommerce.config;
 
+import com.helvino.ecommerce.entity.Category;
 import com.helvino.ecommerce.entity.User;
 import com.helvino.ecommerce.enums.UserRole;
+import com.helvino.ecommerce.repository.CategoryRepository;
 import com.helvino.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -17,12 +20,14 @@ import java.math.BigDecimal;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
         ensureAdminExists();
         enableAllDisabledUsers();
+        seedDefaultCategories();
     }
 
     private void ensureAdminExists() {
@@ -76,6 +81,36 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.saveAll(disabled);
             log.info("Re-enabled {} user account(s) that were incorrectly disabled", disabled.size());
         }
+    }
+
+    private void seedDefaultCategories() {
+        if (categoryRepository.count() > 0) return;
+
+        List<String[]> cats = List.of(
+            new String[]{"Electronics",           "electronics"},
+            new String[]{"Fashion",               "fashion"},
+            new String[]{"Home & Garden",         "home-garden"},
+            new String[]{"Beauty & Personal Care","beauty"},
+            new String[]{"Sports & Outdoors",     "sports"},
+            new String[]{"Groceries & Food",      "groceries"},
+            new String[]{"Books & Education",     "books"},
+            new String[]{"Toys & Games",          "toys"},
+            new String[]{"Automotive",            "automotive"},
+            new String[]{"Health & Wellness",     "health"},
+            new String[]{"Phone Accessories",     "phone-accessories"},
+            new String[]{"Computers & Laptops",   "computers-laptops"}
+        );
+
+        cats.forEach(c -> {
+            Category cat = Category.builder()
+                    .name(c[0])
+                    .slug(c[1])
+                    .active(true)
+                    .sortOrder(cats.indexOf(c))
+                    .build();
+            categoryRepository.save(cat);
+        });
+        log.info("Seeded {} default categories", cats.size());
     }
 
     private String env(String key, String fallback) {
