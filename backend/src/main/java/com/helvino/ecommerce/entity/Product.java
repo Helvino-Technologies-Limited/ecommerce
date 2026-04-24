@@ -78,7 +78,6 @@ public class Product {
 
     private LocalDateTime flashSaleEndsAt;
 
-    @Column(precision = 3, scale = 1)
     private Double averageRating = 0.0;
 
     private int reviewCount = 0;
