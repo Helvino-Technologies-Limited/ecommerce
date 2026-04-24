@@ -6,13 +6,8 @@ server:
 spring:
   application:
     name: helvino-ecommerce
-  datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://neondb_owner:npg_Piva61ycWSoA@ep-quiet-shadow-ankrasex-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
+  # DataSource is configured programmatically in DataSourceConfig.java
+  # to normalise the DATABASE_URL regardless of whether it has the jdbc: prefix.
   jpa:
     hibernate:
       ddl-auto: update
