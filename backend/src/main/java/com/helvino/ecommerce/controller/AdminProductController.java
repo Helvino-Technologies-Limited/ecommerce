@@ -5,12 +5,12 @@ import com.helvino.ecommerce.entity.Product;
 import com.helvino.ecommerce.entity.Tenant;
 import com.helvino.ecommerce.entity.User;
 import com.helvino.ecommerce.enums.Currency;
-import com.helvino.ecommerce.enums.SubscriptionStatus;
 import com.helvino.ecommerce.enums.UserRole;
 import com.helvino.ecommerce.repository.CategoryRepository;
 import com.helvino.ecommerce.repository.ProductRepository;
 import com.helvino.ecommerce.repository.TenantRepository;
 import com.helvino.ecommerce.security.TenantContext;
+import com.helvino.ecommerce.service.TenantSubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.Data;
@@ -39,6 +39,7 @@ public class AdminProductController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final TenantRepository tenantRepository;
+    private final TenantSubscriptionService subscriptionService;
 
     @GetMapping
     public ResponseEntity<Page<Product>> list(
@@ -74,12 +75,13 @@ public class AdminProductController {
                     .body(Map.of("message", "No tenant associated with your account"));
             tenant = tenantRepository.findById(tenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found"));
-            if (tenant.getSubscriptionStatus() == SubscriptionStatus.SUSPENDED ||
-                tenant.getSubscriptionStatus() == SubscriptionStatus.INACTIVE) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message",
-                                "Your subscription is " + tenant.getSubscriptionStatus().name().toLowerCase() +
-                                ". Please renew to add products."));
+            if (!subscriptionService.hasSellerAccess(tenant)) {
+                return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+                        .body(Map.of(
+                                "message", "Your subscription has expired. Pay KSh 500 via Paybill 522533, Account 8071524 to continue selling.",
+                                "paybill", TenantSubscriptionService.PAYBILL,
+                                "account", TenantSubscriptionService.ACCOUNT
+                        ));
             }
         }
         // SUPER_ADMIN: tenant = null (Helvino's own product)
