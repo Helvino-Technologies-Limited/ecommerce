@@ -2,6 +2,7 @@ package com.helvino.ecommerce.config;
 
 import com.helvino.ecommerce.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -53,6 +54,14 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/admin/**")).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 .requestMatchers(new AntPathRequestMatcher("/riders/**")).hasRole("RIDER")
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -> ex
+                // Return 401 (not 403) when the request has no/invalid token on a protected endpoint,
+                // so the frontend's 401-refresh interceptor can attempt a token refresh.
+                .authenticationEntryPoint((req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                .accessDeniedHandler((req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
