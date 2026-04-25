@@ -11,7 +11,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: ALLOWED_ORIGINS
-        value: https://shop.helvino.org,http://localhost:3000
+        value: https://shop.helvino.org,http://localhost:3000,https://ecommerce-theta-jade.vercel.app
       - key: SPRING_PROFILES_ACTIVE
         value: prod
     healthCheckPath: /api/v1/actuator/health
