@@ -37,7 +37,7 @@ app:
     expiration: 86400000       # 24h
     refresh-expiration: 604800000  # 7d
   cors:
-    allowed-origins: ${ALLOWED_ORIGINS:*}
+    allowed-origins: ${ALLOWED_ORIGINS:https://ecommerce-theta-jade.vercel.app}
   company:
     name: "Helvino Technologies LTD"
     email: "info@helvino.org"
