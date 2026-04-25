@@ -12,13 +12,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.UUID;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class ReviewController {
 
     private final ReviewRepository reviewRepo;
     private final ProductRepository productRepo;
-    private final UserRepository userRepo;
+    private final UserRepository userRepo;  // kept for potential future use
 
     /** Public: paginated reviews for a product */
     @GetMapping("/products/{productId}/reviews")
@@ -48,10 +49,7 @@ public class ReviewController {
     public ResponseEntity<?> createReview(
             @PathVariable UUID productId,
             @RequestBody Map<String, Object> body,
-            Authentication auth) {
-
-        User user = userRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            @AuthenticationPrincipal User user) {
 
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
