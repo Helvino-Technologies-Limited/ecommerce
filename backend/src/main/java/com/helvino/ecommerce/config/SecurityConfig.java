@@ -13,7 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,19 +39,17 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Explicitly allow CORS preflight before any auth check
-                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS")).permitAll()
-                // Use AntPathRequestMatcher to avoid MvcRequestMatcher context-path issues
-                .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/products/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/categories/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/delivery/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/payments/mpesa/callback", "POST")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/payments/flutterwave/webhook", "POST")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/admin/upload/**", "POST")).hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(new AntPathRequestMatcher("/admin/**")).hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(new AntPathRequestMatcher("/riders/**")).hasRole("RIDER")
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/auth/**",
+                                 "/products/**",
+                                 "/categories/**",
+                                 "/delivery/**",
+                                 "/ws/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST,
+                                 "/payments/mpesa/callback",
+                                 "/payments/flutterwave/webhook").permitAll()
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/riders/**").hasRole("RIDER")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
