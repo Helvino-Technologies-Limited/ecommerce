@@ -1,7 +1,5 @@
 package com.helvino.ecommerce.security;
 
-import com.helvino.ecommerce.entity.User;
-import com.helvino.ecommerce.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,14 +15,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -34,14 +30,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (token != null && jwtUtil.isTokenValid(token)) {
             try {
                 Claims claims = jwtUtil.parseToken(token);
-                UUID userId = UUID.fromString(claims.getSubject());
+                String subject = claims.getSubject();
                 String role = (String) claims.get("role");
-
-                User user = userRepository.findById(userId).orElse(null);
-                if (user != null && user.isEnabled()) {
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            user, null,
+                String email = (String) claims.get("email");
+                if (subject != null && role != null) {
+                    // Trust JWT claims directly — no DB round-trip on every request.
+                    // This avoids Neon connection exhaustion killing auth for valid tokens.
+                    var principal = new org.springframework.security.core.userdetails.User(
+                            email != null ? email : subject, "",
                             List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            principal, null, principal.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             } catch (Exception ignored) {}
