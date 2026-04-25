@@ -14,6 +14,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,23 +36,26 @@ public class SecurityConfig {
     }
 
     /**
-     * Chain 1 — public paths. securityMatcher guarantees only these paths enter
-     * this chain. anyRequest().permitAll() means no auth check runs here.
-     * JwtAuthFilter is still present so optional auth works (e.g. review POST).
+     * Chain 1 — public paths.
+     *
+     * securityMatcher uses explicit AntPathRequestMatcher objects (not String
+     * patterns) so Spring Security uses them as-is without converting to
+     * MvcRequestMatcher. Only these paths enter this chain, and inside the
+     * chain anyRequest().permitAll() means no authorization check at all.
      */
     @Bean
     @Order(1)
     public SecurityFilterChain publicChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(
-                "/auth/**",
-                "/products/**",
-                "/categories/**",
-                "/delivery/**",
-                "/ws/**",
-                "/payments/mpesa/callback",
-                "/payments/flutterwave/webhook"
-            )
+            .securityMatcher(new OrRequestMatcher(
+                new AntPathRequestMatcher("/auth/**"),
+                new AntPathRequestMatcher("/products/**"),
+                new AntPathRequestMatcher("/categories/**"),
+                new AntPathRequestMatcher("/delivery/**"),
+                new AntPathRequestMatcher("/ws/**"),
+                new AntPathRequestMatcher("/payments/mpesa/callback"),
+                new AntPathRequestMatcher("/payments/flutterwave/webhook")
+            ))
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,9 +65,9 @@ public class SecurityConfig {
     }
 
     /**
-     * Chain 2 — protected paths. Everything not matched by Chain 1 lands here.
-     * Returns 401 (not 403) for missing/invalid tokens so the frontend refresh
-     * interceptor can attempt a token refresh.
+     * Chain 2 — protected paths.
+     * Returns 401 (not 403) for missing/invalid tokens so the frontend
+     * refresh interceptor can attempt a token refresh.
      */
     @Bean
     @Order(2)
@@ -72,8 +77,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers("/riders/**").hasRole("RIDER")
+                .requestMatchers(new AntPathRequestMatcher("/admin/**")).hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/riders/**")).hasRole("RIDER")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
