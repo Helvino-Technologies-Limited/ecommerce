@@ -26,6 +26,7 @@ public class ProductController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) String q) {
 
         Sort sortSpec = switch (sort != null ? sort : "newest") {
@@ -40,10 +41,14 @@ public class ProductController {
 
         if (q != null && !q.isBlank() && categoryId != null) {
             return ResponseEntity.ok(productRepository.searchInCategory(q, categoryId, pageable));
+        } else if (q != null && !q.isBlank() && category != null && !category.isBlank()) {
+            return ResponseEntity.ok(productRepository.searchInCategoryBySlug(q, category, pageable));
         } else if (q != null && !q.isBlank()) {
             return ResponseEntity.ok(productRepository.search(q, pageable));
         } else if (categoryId != null) {
             return ResponseEntity.ok(productRepository.findByCategoryId(categoryId, pageable));
+        } else if (category != null && !category.isBlank()) {
+            return ResponseEntity.ok(productRepository.findByCategorySlug(category, pageable));
         }
         return ResponseEntity.ok(productRepository.findByActiveTrue(pageable));
     }

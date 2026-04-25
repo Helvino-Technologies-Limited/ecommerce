@@ -45,6 +45,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Explicitly allow CORS preflight before any auth check
+                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS")).permitAll()
                 // Use AntPathRequestMatcher to avoid MvcRequestMatcher context-path issues
                 .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/products/**")).permitAll()
