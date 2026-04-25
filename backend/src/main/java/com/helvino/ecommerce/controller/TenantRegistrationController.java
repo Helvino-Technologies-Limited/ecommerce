@@ -16,9 +16,13 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -89,6 +93,73 @@ public class TenantRegistrationController {
         );
     }
 
+    /**
+     * Upgrade an already-logged-in user (any role except SUPER_ADMIN) to a seller.
+     * Creates a Tenant record, changes the user's role to ADMIN, and returns
+     * a fresh JWT so the frontend can swap tokens without requiring a re-login.
+     */
+    @PostMapping("/become-seller")
+    @PreAuthorize("isAuthenticated()")
+    @Transactional
+    public ResponseEntity<?> becomeSeller(
+            @Valid @RequestBody BecomeSellerRequest req,
+            @AuthenticationPrincipal User currentUser) {
+
+        if (currentUser.getRole() == UserRole.SUPER_ADMIN) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Super admins cannot register as a tenant"));
+        }
+        if (tenantRepository.findByOwnerId(currentUser.getId()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "You already have a business registered"));
+        }
+        if (tenantRepository.existsByBusinessName(req.getBusinessName())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Business name already taken"));
+        }
+
+        // Upgrade role to ADMIN
+        currentUser.setRole(UserRole.ADMIN);
+        userRepository.save(currentUser);
+
+        String slug = generateSlug(req.getBusinessName());
+
+        Tenant tenant = Tenant.builder()
+                .businessName(req.getBusinessName())
+                .slug(slug)
+                .businessDescription(req.getBusinessDescription())
+                .contactPhone(req.getContactPhone() != null
+                        ? req.getContactPhone() : currentUser.getPhone())
+                .owner(currentUser)
+                .subscriptionStatus(SubscriptionStatus.TRIAL)
+                .trialEndsAt(LocalDate.now().plusDays(30))
+                .active(true)
+                .build();
+        tenantRepository.save(tenant);
+
+        // Issue a fresh token with the new role and tenantId
+        String token = jwtUtil.generateToken(
+                currentUser.getId(), currentUser.getEmail(), "ADMIN", tenant.getId());
+        String refresh = jwtUtil.generateRefreshToken(currentUser.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                AuthResponse.builder()
+                        .accessToken(token)
+                        .refreshToken(refresh)
+                        .id(currentUser.getId())
+                        .email(currentUser.getEmail())
+                        .firstName(currentUser.getFirstName())
+                        .lastName(currentUser.getLastName())
+                        .role("ADMIN")
+                        .avatarUrl(currentUser.getAvatarUrl())
+                        .walletBalance(currentUser.getWalletBalance())
+                        .loyaltyPoints(currentUser.getLoyaltyPoints())
+                        .tenantId(tenant.getId())
+                        .businessName(tenant.getBusinessName())
+                        .build()
+        );
+    }
+
     private String generateSlug(String name) {
         String base = name.toLowerCase()
                 .replaceAll("[^a-z0-9\\s-]", "")
@@ -99,6 +170,13 @@ public class TenantRegistrationController {
         int i = 2;
         while (tenantRepository.existsBySlug(base + "-" + i)) i++;
         return base + "-" + i;
+    }
+
+    @Data
+    public static class BecomeSellerRequest {
+        @NotBlank @Size(min = 2) private String businessName;
+        private String businessDescription;
+        private String contactPhone;
     }
 
     @Data
