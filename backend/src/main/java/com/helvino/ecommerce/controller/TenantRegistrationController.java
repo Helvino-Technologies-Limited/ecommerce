@@ -68,7 +68,7 @@ public class TenantRegistrationController {
                 .contactPhone(req.getContactPhone() != null ? req.getContactPhone() : req.getPhone())
                 .owner(owner)
                 .subscriptionStatus(SubscriptionStatus.TRIAL)
-                .trialEndsAt(LocalDate.now().plusDays(30))
+                .trialEndsAt(LocalDate.now().plusDays(5))
                 .active(true)
                 .build();
         tenantRepository.save(tenant);
@@ -132,7 +132,7 @@ public class TenantRegistrationController {
                         ? req.getContactPhone() : currentUser.getPhone())
                 .owner(currentUser)
                 .subscriptionStatus(SubscriptionStatus.TRIAL)
-                .trialEndsAt(LocalDate.now().plusDays(30))
+                .trialEndsAt(LocalDate.now().plusDays(5))
                 .active(true)
                 .build();
         tenantRepository.save(tenant);

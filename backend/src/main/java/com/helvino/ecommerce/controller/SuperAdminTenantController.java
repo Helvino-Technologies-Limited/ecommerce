@@ -132,7 +132,7 @@ public class SuperAdminTenantController {
                 .contactPhone(req.getContactPhone())
                 .owner(owner)
                 .subscriptionStatus(status)
-                .trialEndsAt(LocalDate.now().plusDays(30))
+                .trialEndsAt(LocalDate.now().plusDays(5))
                 .subscriptionRenewsAt(renewsAt)
                 .active(true)
                 .build();
@@ -219,7 +219,7 @@ public class SuperAdminTenantController {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
         tenant.setSubscriptionStatus(SubscriptionStatus.TRIAL);
-        tenant.setTrialEndsAt(LocalDate.now().plusDays(30));
+        tenant.setTrialEndsAt(LocalDate.now().plusDays(5));
         tenant.setActive(true);
         tenant.getOwner().setEnabled(true);
         userRepository.save(tenant.getOwner());
