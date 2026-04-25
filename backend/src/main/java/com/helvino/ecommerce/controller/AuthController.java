@@ -3,8 +3,11 @@ package com.helvino.ecommerce.controller;
 import com.helvino.ecommerce.dto.request.LoginRequest;
 import com.helvino.ecommerce.dto.request.RegisterRequest;
 import com.helvino.ecommerce.dto.response.AuthResponse;
+import com.helvino.ecommerce.entity.Tenant;
 import com.helvino.ecommerce.entity.User;
+import com.helvino.ecommerce.enums.SubscriptionStatus;
 import com.helvino.ecommerce.enums.UserRole;
+import com.helvino.ecommerce.repository.TenantRepository;
 import com.helvino.ecommerce.repository.UserRepository;
 import com.helvino.ecommerce.security.JwtUtil;
 import jakarta.validation.Valid;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -22,6 +26,7 @@ import java.util.Map;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -49,28 +54,38 @@ public class AuthController {
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
         String refresh = jwtUtil.generateRefreshToken(user.getId());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(buildAuthResponse(user, token, refresh));
+        return ResponseEntity.status(HttpStatus.CREATED).body(buildAuthResponse(user, token, refresh, null));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
-        User user = userRepository.findByEmail(req.getEmail())
-                .orElse(null);
+        User user = userRepository.findByEmail(req.getEmail()).orElse(null);
 
         if (user == null || !passwordEncoder.matches(req.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid email or password"));
         }
         if (!user.isEnabled()) {
-            // Return 401 not 403 — disabled account should not reveal it exists
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Account is disabled. Contact support at info@helvino.org"));
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        // For ADMIN users: check tenant status and embed tenantId in token
+        Tenant tenant = null;
+        if (user.getRole() == UserRole.ADMIN) {
+            tenant = tenantRepository.findByOwnerId(user.getId()).orElse(null);
+            if (tenant != null && tenant.getSubscriptionStatus() == SubscriptionStatus.SUSPENDED) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message",
+                                "Your account has been suspended. Contact support at info@helvino.org"));
+            }
+        }
+
+        UUID tenantId = tenant != null ? tenant.getId() : null;
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(), tenantId);
         String refresh = jwtUtil.generateRefreshToken(user.getId());
 
-        return ResponseEntity.ok(buildAuthResponse(user, token, refresh));
+        return ResponseEntity.ok(buildAuthResponse(user, token, refresh, tenant));
     }
 
     @PostMapping("/refresh")
@@ -81,15 +96,21 @@ public class AuthController {
                     .body(Map.of("message", "Invalid or expired refresh token"));
         }
 
-        var userId = jwtUtil.getUserId(refreshToken);
+        UUID userId = jwtUtil.getUserId(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String newToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        Tenant tenant = null;
+        if (user.getRole() == UserRole.ADMIN) {
+            tenant = tenantRepository.findByOwnerId(user.getId()).orElse(null);
+        }
+
+        UUID tenantId = tenant != null ? tenant.getId() : null;
+        String newToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(), tenantId);
         return ResponseEntity.ok(Map.of("accessToken", newToken));
     }
 
-    private AuthResponse buildAuthResponse(User user, String token, String refresh) {
+    private AuthResponse buildAuthResponse(User user, String token, String refresh, Tenant tenant) {
         return AuthResponse.builder()
                 .accessToken(token)
                 .refreshToken(refresh)
@@ -101,6 +122,8 @@ public class AuthController {
                 .avatarUrl(user.getAvatarUrl())
                 .walletBalance(user.getWalletBalance())
                 .loyaltyPoints(user.getLoyaltyPoints())
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .businessName(tenant != null ? tenant.getBusinessName() : null)
                 .build();
     }
 }

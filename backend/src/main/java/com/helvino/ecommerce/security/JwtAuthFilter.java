@@ -46,6 +46,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             user, null,
                             List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                     SecurityContextHolder.getContext().setAuthentication(auth);
+                    // Stash tenantId and impersonation flag for controllers to use
+                    UUID tenantId = jwtUtil.getTenantId(token);
+                    if (tenantId != null) request.setAttribute("tenantId", tenantId);
+                    UUID impersonatedBy = jwtUtil.getImpersonatedBy(token);
+                    if (impersonatedBy != null) request.setAttribute("impersonatedBy", impersonatedBy);
                 }
             } catch (Exception ignored) {}
         }

@@ -69,6 +69,17 @@ public class Product {
     @JoinColumn(name = "branch_id")
     private Branch branch;
 
+    // null = Helvino's own product; non-null = belongs to a tenant
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+    @Transient
+    public String getSellerName() {
+        return (tenant != null) ? tenant.getBusinessName() : "Helvino";
+    }
+
     private boolean active = true;
 
     private boolean featured = false;

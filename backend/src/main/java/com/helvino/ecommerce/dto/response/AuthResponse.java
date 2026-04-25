@@ -17,4 +17,7 @@ public class AuthResponse {
     private String avatarUrl;
     private BigDecimal walletBalance;
     private int loyaltyPoints;
+    // Populated for ADMIN users that belong to a tenant
+    private UUID tenantId;
+    private String businessName;
 }

@@ -9,6 +9,7 @@ spring:
   # DataSource is built programmatically in DataSourceConfig (uses PGSimpleDataSource
   # to bypass HikariCP's acceptsURL classloader issue in Spring Boot fat JARs)
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: false

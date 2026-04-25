@@ -27,14 +27,34 @@ public class JwtUtil {
     }
 
     public String generateToken(UUID userId, String email, String role) {
-        return Jwts.builder()
+        return generateToken(userId, email, role, null);
+    }
+
+    public String generateToken(UUID userId, String email, String role, UUID tenantId) {
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey())
-                .compact();
+                .signWith(getSigningKey());
+        if (tenantId != null) builder.claim("tenantId", tenantId.toString());
+        return builder.compact();
+    }
+
+    public String generateImpersonationToken(UUID targetUserId, String targetEmail,
+                                              String targetRole, UUID tenantId,
+                                              UUID impersonatorId) {
+        var builder = Jwts.builder()
+                .subject(targetUserId.toString())
+                .claim("email", targetEmail)
+                .claim("role", targetRole)
+                .claim("impersonatedBy", impersonatorId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3_600_000)) // 1 hour max
+                .signWith(getSigningKey());
+        if (tenantId != null) builder.claim("tenantId", tenantId.toString());
+        return builder.compact();
     }
 
     public String generateRefreshToken(UUID userId) {
@@ -56,6 +76,20 @@ public class JwtUtil {
 
     public UUID getUserId(String token) {
         return UUID.fromString(parseToken(token).getSubject());
+    }
+
+    public UUID getTenantId(String token) {
+        try {
+            String raw = (String) parseToken(token).get("tenantId");
+            return raw != null ? UUID.fromString(raw) : null;
+        } catch (Exception e) { return null; }
+    }
+
+    public UUID getImpersonatedBy(String token) {
+        try {
+            String raw = (String) parseToken(token).get("impersonatedBy");
+            return raw != null ? UUID.fromString(raw) : null;
+        } catch (Exception e) { return null; }
     }
 
     public boolean isTokenValid(String token) {

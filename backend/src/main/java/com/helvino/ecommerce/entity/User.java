@@ -86,6 +86,11 @@ public class User {
     @Builder.Default
     private List<Order> orders = new ArrayList<>();
 
+    // Back-reference to this user's tenant (null for CUSTOMER and SUPER_ADMIN)
+    @JsonIgnore
+    @OneToOne(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Tenant tenant;
+
     public String getFullName() {
         return firstName + " " + lastName;
     }
