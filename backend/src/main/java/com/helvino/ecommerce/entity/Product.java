@@ -1,5 +1,6 @@
 package com.helvino.ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.helvino.ecommerce.enums.Currency;
 import jakarta.persistence.*;
 import lombok.*;
@@ -90,10 +91,12 @@ public class Product {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ProductVariant> variants = new ArrayList<>();

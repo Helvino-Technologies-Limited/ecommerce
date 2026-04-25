@@ -1,5 +1,6 @@
 package com.helvino.ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.helvino.ecommerce.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,6 +34,7 @@ public class User {
     @Column(unique = true)
     private String phone;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -65,6 +67,7 @@ public class User {
 
     private String fcmToken;
 
+    @JsonIgnore
     private String refreshToken;
 
     @CreationTimestamp
@@ -73,10 +76,12 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Order> orders = new ArrayList<>();
