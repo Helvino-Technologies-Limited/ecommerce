@@ -29,6 +29,7 @@ public class OrderController {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/orders")
     public ResponseEntity<Order> createOrder(
             @AuthenticationPrincipal User user,
@@ -107,6 +108,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderRepository.save(order));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/orders")
     public ResponseEntity<Page<Order>> getMyOrders(
             @AuthenticationPrincipal User user,
@@ -116,6 +118,7 @@ public class OrderController {
                 user.getId(), PageRequest.of(page, size, Sort.by("createdAt").descending())));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/orders/{id}")
     public ResponseEntity<Order> getOrder(@AuthenticationPrincipal User user, @PathVariable UUID id) {
         return orderRepository.findById(id)
