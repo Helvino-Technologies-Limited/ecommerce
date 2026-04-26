@@ -24,7 +24,7 @@ public class Order {
     @Column(unique = true, nullable = false)
     private String orderNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
@@ -32,11 +32,11 @@ public class Order {
     @JoinColumn(name = "rider_id")
     private User rider;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "delivery_address_id")
     private Address deliveryAddress;
 
@@ -83,6 +83,14 @@ public class Order {
 
     @Column(columnDefinition = "TEXT")
     private String deliveryProofUrl;
+
+    // Customer confirmation after receipt and payment
+    private LocalDateTime customerConfirmedAt;
+
+    private String customerPaymentRef;
+
+    @Column(columnDefinition = "TEXT")
+    private String customerNote;
 
     private int loyaltyPointsEarned = 0;
 

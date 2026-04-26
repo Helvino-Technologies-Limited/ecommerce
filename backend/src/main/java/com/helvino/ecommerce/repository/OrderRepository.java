@@ -22,6 +22,17 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     List<Order> findByRiderIdAndStatus(UUID riderId, OrderStatus status);
 
+    // Tenant-scoped: orders that contain at least one product from this tenant
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.items i JOIN i.product p WHERE p.tenant.id = :tenantId")
+    Page<Order> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.items i JOIN i.product p WHERE p.tenant.id = :tenantId AND o.status = :status")
+    Page<Order> findByTenantIdAndStatus(@Param("tenantId") UUID tenantId, @Param("status") OrderStatus status, Pageable pageable);
+
+    // Ownership check before status update
+    @Query("SELECT COUNT(i) > 0 FROM OrderItem i WHERE i.order.id = :orderId AND i.product.tenant.id = :tenantId")
+    boolean existsItemByOrderIdAndTenantId(@Param("orderId") UUID orderId, @Param("tenantId") UUID tenantId);
+
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
     long countByStatus(@Param("status") OrderStatus status);
 

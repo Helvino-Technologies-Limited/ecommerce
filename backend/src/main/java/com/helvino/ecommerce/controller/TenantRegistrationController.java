@@ -175,7 +175,7 @@ public class TenantRegistrationController {
     @Data
     public static class BecomeSellerRequest {
         @NotBlank @Size(min = 2) private String businessName;
-        private String businessDescription;
+        @NotBlank(message = "Please describe what you sell") @Size(min = 5) private String businessDescription;
         private String contactPhone;
     }
 
@@ -187,7 +187,7 @@ public class TenantRegistrationController {
         private String phone;
         @NotBlank @Size(min = 8) private String password;
         @NotBlank @Size(min = 2) private String businessName;
-        private String businessDescription;
+        @NotBlank(message = "Please describe what you sell") @Size(min = 5) private String businessDescription;
         private String contactPhone;
     }
 }

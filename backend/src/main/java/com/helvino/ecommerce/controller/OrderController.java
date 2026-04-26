@@ -4,8 +4,12 @@ import com.helvino.ecommerce.entity.*;
 import com.helvino.ecommerce.enums.Currency;
 import com.helvino.ecommerce.enums.OrderStatus;
 import com.helvino.ecommerce.enums.PaymentMethod;
+import com.helvino.ecommerce.enums.UserRole;
 import com.helvino.ecommerce.repository.*;
+import com.helvino.ecommerce.security.TenantContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -132,22 +136,47 @@ public class OrderController {
     public ResponseEntity<Page<Order>> adminGetOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        if (status != null) {
-            return ResponseEntity.ok(orderRepository.findByStatus(
-                    status, PageRequest.of(page, size, Sort.by("createdAt").descending())));
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal User caller,
+            HttpServletRequest request) {
+
+        var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        if (caller.getRole() == UserRole.SUPER_ADMIN) {
+            if (status != null) return ResponseEntity.ok(orderRepository.findByStatus(status, pageable));
+            return ResponseEntity.ok(orderRepository.findAll(pageable));
         }
-        return ResponseEntity.ok(orderRepository.findAll(
-                PageRequest.of(page, size, Sort.by("createdAt").descending())));
+
+        // ADMIN: only orders containing their products
+        UUID tenantId = TenantContext.getTenantId(request);
+        if (tenantId == null) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (status != null) {
+            return ResponseEntity.ok(orderRepository.findByTenantIdAndStatus(tenantId, status, pageable));
+        }
+        return ResponseEntity.ok(orderRepository.findByTenantId(tenantId, pageable));
     }
 
     @PatchMapping("/admin/orders/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<Order> updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Order> updateStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal User caller,
+            HttpServletRequest request) {
+
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setStatus(OrderStatus.valueOf(body.get("status")));
 
+        if (caller.getRole() == UserRole.ADMIN) {
+            UUID tenantId = TenantContext.getTenantId(request);
+            if (tenantId == null || !orderRepository.existsItemByOrderIdAndTenantId(id, tenantId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(null);
+            }
+        }
+
+        order.setStatus(OrderStatus.valueOf(body.get("status")));
         if (OrderStatus.DELIVERED.name().equals(body.get("status"))) {
             order.setDeliveredAt(LocalDateTime.now());
         }
@@ -162,8 +191,44 @@ public class OrderController {
         return ResponseEntity.ok(orderRepository.save(order));
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/orders/{id}/confirm")
+    public ResponseEntity<?> confirmReceipt(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ConfirmReceiptRequest req) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getCustomer().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Order must be marked as delivered before you can confirm receipt"));
+        }
+        if (order.getCustomerConfirmedAt() != null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "You have already confirmed receipt for this order"));
+        }
+
+        order.setCustomerConfirmedAt(LocalDateTime.now());
+        order.setCustomerPaymentRef(req.getPaymentReference());
+        order.setCustomerNote(req.getNote());
+
+        return ResponseEntity.ok(orderRepository.save(order));
+    }
+
     private String generateOrderNumber() {
         return "ORD-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000);
+    }
+
+    @Data
+    public static class ConfirmReceiptRequest {
+        @NotBlank(message = "Payment reference is required")
+        private String paymentReference;
+        private String note;
     }
 
     @Data
